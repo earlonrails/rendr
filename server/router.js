@@ -15,9 +15,14 @@ inherit(ServerRouter, BaseRouter);
 
 ServerRouter.prototype.escapeParams = function(params) {
   var escaped = {};
-  _.each(params, function(value, key) {
-    escaped[key] = sanitize(value).xss();
-  });
+  for(var key in params) {
+    var value = params[key];
+    if ((typeof value === "object" && Object.keys(value).length > 0) ||
+        (typeof value === "string" && value !== "") ||
+        (typeof value === "array" && value.length > 0)){
+      escaped[key] = sanitize(value).xss();
+    }
+  }
   return escaped;
 };
 
@@ -152,7 +157,7 @@ ServerRouter.prototype.match = function(pathToMatch) {
   */
   Router = require('express').Router;
   this._expressRouter = new Router();
-  _.each(routes, function(route) {
+  routes.forEach(function(route) {
     // Add the route to the Express router, so we can use its matching logic
     // without attempting to duplicate it.
     path = route[0];

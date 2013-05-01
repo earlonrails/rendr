@@ -298,9 +298,9 @@ describe("server/router", function() {
 });
 
 function resetProperties(obj, properties) {
-  _.each(properties, function(value, key) {
+  for(var key in properties){
     obj.__defineGetter__(key, function() {
-      return value;
+      return properties[key];
     });
-  });
+  }
 }

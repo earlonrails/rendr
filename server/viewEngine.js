@@ -75,13 +75,14 @@ function getBootstrappedData(locals, app) {
 
   modelUtils = require('../shared/modelUtils');
   bootstrappedData = {};
-  _.each(locals, function(modelOrCollection, name) {
+  for(var key in locals) {
+    modelOrCollection = locals[key];
     if (modelUtils.isModel(modelOrCollection) || modelUtils.isCollection(modelOrCollection)) {
-      bootstrappedData[name] = {
+      bootstrappedData[key] = {
         summary: app.fetcher.summarize(modelOrCollection),
         data: modelOrCollection.toJSON()
       };
     }
-  });
+  }
   return bootstrappedData;
 }

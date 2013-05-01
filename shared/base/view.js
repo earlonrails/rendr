@@ -160,7 +160,8 @@ module.exports = BaseView = Backbone.View.extend({
 
     // Add model & collection meta data from options,
     // as well as any non-object option values.
-    _.each(this.options, function(value, key) {
+    for(var key in this.options) {
+      value = this.options[key];
       if (value != null) {
         if (key === 'model') {
           key = 'model_id';
@@ -173,8 +174,7 @@ module.exports = BaseView = Backbone.View.extend({
           attributes["data-" + key] = _.escape(value);
         }
       }
-    });
-
+    }
     return attributes;
   },
 
@@ -390,7 +390,7 @@ module.exports = BaseView = Backbone.View.extend({
   },
 
   removeChildViews: function() {
-    _.each(this.childViews || [], function(view) {
+    (this.childViews || []).forEach(function(view) {
       view.remove();
     });
   },
@@ -428,7 +428,8 @@ BaseView.attach = function(app, parentView) {
     if (!$el.data('view-attached')) {
       options = $el.data();
       viewName = options.view;
-      _.each(options, function(value, key) {
+      for (var key in options) {
+        value = options[key];
         if (_.isString(value)) {
           parsed = _.unescape(value);
           try {
@@ -436,7 +437,7 @@ BaseView.attach = function(app, parentView) {
           } catch (err) {}
           options[key] = parsed;
         }
-      });
+      }
       options.app = app;
       ViewClass = BaseView.getView(viewName);
       view = new ViewClass(options);

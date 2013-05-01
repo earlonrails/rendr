@@ -137,51 +137,54 @@ Fetcher.prototype._retrieve = function(fetchSpecs, options, callback) {
     _this = this;
 
   batchedRequests = {};
-  _.each(fetchSpecs, function(spec, name) {
-    batchedRequests[name] = function(cb) {
-      var collectionData, idAttribute, model, modelData, modelOptions;
+  for(var key in fetchSpecs) {
+    spec = fetchSpecs[key];
+    batchedRequests[key] = (function(spec) {
+      return function(cb) {
+        var collectionData, idAttribute, model, modelData, modelOptions;
 
-      if (!options.readFromCache) {
-        _this.fetchFromApi(spec, cb);
-      } else {
-        modelData = null;
-        modelOptions = {};
-
-        // First, see if we have stored the model or collection.
-        if (spec.model != null) {
-          idAttribute = modelUtils.modelIdAttribute(spec.model);
-          modelData = _this.modelStore.get(spec.model, spec.params[idAttribute]);
-        } else if (spec.collection != null) {
-          collectionData = _this.collectionStore.get(spec.collection, spec.params);
-          if (collectionData) {
-            modelData = _this.retrieveModelsForCollectionName(spec.collection, collectionData.ids);
-            modelOptions = {
-              meta: collectionData.meta
-            };
-          }
-        }
-
-        // If we found the model/collection in the store, then return that.
-        if (modelData != null && !_this.isMissingKeys(modelData, spec.ensureKeys)) {
-          model = _this.getModelForSpec(spec, modelData, modelOptions);
-
-          // If 'checkFresh' is set (and we're in the client), then before we
-          // return the cached object we fire off a fetch, compare the results,
-          // and if the data is different, we trigger a 'refresh' event.
-          if (spec.checkFresh && !global.isServer && _this.shouldCheckFresh(spec)) {
-            model.checkFresh();
-            _this.didCheckFresh(spec);
-          }
-          cb(null, model);
-        } else {
-          /* Else, fetch anew.
-          */
-
+        if (!options.readFromCache) {
           _this.fetchFromApi(spec, cb);
+        } else {
+          modelData = null;
+          modelOptions = {};
+
+          // First, see if we have stored the model or collection.
+          if (spec.model != null) {
+            idAttribute = modelUtils.modelIdAttribute(spec.model);
+            modelData = _this.modelStore.get(spec.model, spec.params[idAttribute]);
+          } else if (spec.collection != null) {
+            collectionData = _this.collectionStore.get(spec.collection, spec.params);
+            if (collectionData) {
+              modelData = _this.retrieveModelsForCollectionName(spec.collection, collectionData.ids);
+              modelOptions = {
+                meta: collectionData.meta
+              };
+            }
+          }
+
+          // If we found the model/collection in the store, then return that.
+          if (modelData != null && !_this.isMissingKeys(modelData, spec.ensureKeys)) {
+            model = _this.getModelForSpec(spec, modelData, modelOptions);
+
+            // If 'checkFresh' is set (and we're in the client), then before we
+            // return the cached object we fire off a fetch, compare the results,
+            // and if the data is different, we trigger a 'refresh' event.
+            if (spec.checkFresh && !global.isServer && _this.shouldCheckFresh(spec)) {
+              model.checkFresh();
+              _this.didCheckFresh(spec);
+            }
+            cb(null, model);
+          } else {
+            /* Else, fetch anew.
+            */
+
+            _this.fetchFromApi(spec, cb);
+          }
         }
       }
-    };
-  });
+    })(spec);
+  }
   async.parallel(batchedRequests, callback);
 };
 
@@ -259,9 +262,9 @@ Fetcher.prototype.summarize = function(modelOrCollection) {
 };
 
 Fetcher.prototype.storeResults = function(results) {
-  _.each(results, function(modelOrCollection) {
-    modelOrCollection.store();
-  });
+  for(var key in results) {
+    results[key].store();
+  }
 };
 
 Fetcher.prototype.bootstrapData = function(modelMap) {
@@ -269,10 +272,11 @@ Fetcher.prototype.bootstrapData = function(modelMap) {
       _this = this;
 
   results = {};
-  _.each(modelMap, function(map, name) {
+  for(var key in modelMap) {
+    map = modelMap[key];
     modelOrCollection = _this.getModelForSpec(map.summary, map.data, _.pick(map.summary, 'params', 'meta'));
-    results[name] = modelOrCollection;
-  });
+    results[key] = modelOrCollection;
+  }
   this.storeResults(results);
 };
 
@@ -282,9 +286,10 @@ Fetcher.prototype.hydrate = function(summaries, options) {
 
   options = options || {};
   results = {};
-  _.each(summaries, function(summary, name) {
+  for(var key in summaries) {
+    summary = summaries[key];
     if (summary.model != null) {
-      results[name] = _this.modelStore.get(summary.model, summary.id, true);
+      results[key] = _this.modelStore.get(summary.model, summary.id, true);
     } else if (summary.collection != null) {
       // Also support getting all models for a collection.
       collectionData = _this.collectionStore.get(summary.collection, summary.params);
@@ -296,12 +301,12 @@ Fetcher.prototype.hydrate = function(summaries, options) {
         params: summary.params,
         meta: collectionData.meta
       };
-      results[name] = modelUtils.getCollection(summary.collection, models, collectionOptions);
+      results[key] = modelUtils.getCollection(summary.collection, models, collectionOptions);
     }
-    if ((results[name] != null) && (options.app != null)) {
-      results[name].app = options.app;
+    if ((results[key] != null) && (options.app != null)) {
+      results[key].app = options.app;
     }
-  });
+  }
   return results;
 };
 

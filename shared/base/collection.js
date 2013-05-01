@@ -84,12 +84,13 @@ module.exports = Super.extend({
 
     resp = _.clone(resp);
     jsonKey = this.model.prototype.jsonKey;
-    _.each(resp, function(modelResp, i) {
+    for (var key in resp) {
+      modelResp = resp[key];
       jsonKeyResp = modelResp[jsonKey];
       if (jsonKeyResp) {
-        resp[i] = jsonKeyResp;
+        resp[key] = jsonKeyResp;
       }
-    });
+    }
     return resp;
   },
 
